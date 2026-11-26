@@ -17,7 +17,7 @@ public class Main {
                         "may be blocked or restricted by your desktop compositor.");
             }
 
-
+//            MpegCapture capture = new MpegCapture(robot, );
         } catch (HeadlessException e) {
             diagnoseHeadlessEnvironment();
         } catch (AWTException e) {
