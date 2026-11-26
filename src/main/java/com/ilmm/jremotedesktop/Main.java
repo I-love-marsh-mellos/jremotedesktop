@@ -1,8 +1,15 @@
 package com.ilmm.jremotedesktop;
 
+import com.sun.net.httpserver.HttpServer;
+
 import java.awt.*;
+import java.io.IOException;
+import java.net.InetSocketAddress;
 
 public class Main {
+    public static final int FRAME_RATE = 20;
+    public static MpegCapture capture;
+
     public static void main(String[] args) {
         if (GraphicsEnvironment.isHeadless()) {
             diagnoseHeadlessEnvironment();
@@ -17,13 +24,25 @@ public class Main {
                         "may be blocked or restricted by your desktop compositor.");
             }
 
-//            MpegCapture capture = new MpegCapture(robot, );
+            capture = new MpegCapture(robot, new Rectangle(Toolkit.getDefaultToolkit().getScreenSize()), ImageFormat.JPG);
+            capture.start();
         } catch (HeadlessException e) {
             diagnoseHeadlessEnvironment();
+            return;
         } catch (AWTException e) {
-            System.err.println("Display server found, but Robot initialization failed: " + e.getMessage());
+            System.err.println("Display server found, but AWT initialization failed: " + e.getMessage());
+            return;
         } catch (AWTError | InternalError e) {
             System.err.println("Failed to connect to the X11 display server: " + e.getMessage());
+            return;
+        }
+
+        try {
+            HttpServer server = HttpServer.create(new InetSocketAddress(9000), 0);
+            server.start();
+            server.createContext("/", new VideoHandler());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

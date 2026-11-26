@@ -1,5 +1,5 @@
 package com.ilmm.jremotedesktop;
 
 public interface FrameCaptureListener {
-    void jpegFrame(byte[] jpegFrame);
+    void framePacket(byte[] jpegFrame, int i, int totalLength);
 }

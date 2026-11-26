@@ -33,6 +33,8 @@ public class JavaScriptToKeyEventMap {
             case "x" -> KeyEvent.VK_X;
             case "y" -> KeyEvent.VK_Y;
             case "z" -> KeyEvent.VK_Z;
+
+            default -> -1;
         };
     }
 }
