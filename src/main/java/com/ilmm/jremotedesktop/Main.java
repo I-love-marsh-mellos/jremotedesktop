@@ -4,10 +4,11 @@ import com.sun.net.httpserver.HttpServer;
 
 import java.awt.*;
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 
 public class Main {
-    public static final int FRAME_RATE = 20;
+    public static final int FRAME_RATE = 30;
     public static MpegCapture capture;
 
     public static void main(String[] args) {
@@ -25,7 +26,7 @@ public class Main {
             }
 
             capture = new MpegCapture(robot, new Rectangle(Toolkit.getDefaultToolkit().getScreenSize()), ImageFormat.JPG);
-            capture.start();
+            capture.setAutoStartStop(true);
         } catch (HeadlessException e) {
             diagnoseHeadlessEnvironment();
             return;
@@ -41,6 +42,9 @@ public class Main {
             HttpServer server = HttpServer.create(new InetSocketAddress(9000), 0);
             server.start();
             server.createContext("/", new VideoHandler());
+        } catch (BindException e) {
+            System.out.println("Server port is already in use");
+            System.out.println(e.getMessage());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

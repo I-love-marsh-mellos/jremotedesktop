@@ -10,15 +10,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MpegCapture {
-    private Robot robot;
+    private final Robot robot;
     private Rectangle bounds;
     private ImageFormat format;
     private Thread captureThread;
     private List<FrameCaptureListener> listeners = new ArrayList<>();
 
     private static final byte[] CRLF = "\r\n".getBytes();
+    private boolean autoStartStop = false;
 
-    class DirectByteArrayOutputStream extends ByteArrayOutputStream {
+    static class DirectByteArrayOutputStream extends ByteArrayOutputStream {
         public DirectByteArrayOutputStream(int size) { super(size); }
         public byte[] getBuffer() { return buf; }
     }
@@ -31,10 +32,8 @@ public class MpegCapture {
 
     public void start() {
         captureThread = new Thread(() -> {
-            // Pre-allocate ~2MB to prevent array resizing during runtime
             DirectByteArrayOutputStream baos = new DirectByteArrayOutputStream(2 * 1024 * 1024);
 
-            // Pad Content-Length to a fixed 10 digits so the header length never changes
             String headerTemplate = "--frame\r\nContent-Type: image/png\r\nContent-Length: %010d\r\n\r\n";
             int headerLen = String.format(headerTemplate, 0).getBytes(StandardCharsets.US_ASCII).length;
 
@@ -74,11 +73,17 @@ public class MpegCapture {
     }
 
     public void addListener(FrameCaptureListener listener) {
+        if (autoStartStop && listeners.isEmpty()) start();
         listeners.add(listener);
     }
 
     public void removeListener(FrameCaptureListener listener) {
         listeners.remove(listener);
+        if (autoStartStop && listeners.isEmpty()) stop();
+    }
+
+    public void setAutoStartStop(boolean autoStartStop) {
+        this.autoStartStop = autoStartStop;
     }
 
     private void sendAll(byte[] framePacket, int i, int totalLength) {

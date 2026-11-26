@@ -9,8 +9,10 @@ import java.util.HashMap;
 public class AuthHandler implements HttpHandler {
     private final HttpHandler upstream;
     private final HashMap<String, String> sessions;
+    private HttpHandler unauthorized;
 
-    private AuthHandler(AuthHandler handler, HttpHandler upstream) {
+    private AuthHandler(AuthHandler handler, HttpHandler upstream, HttpHandler unauthorized) {
+        this.unauthorized = unauthorized;
         if (upstream == null) {
             throw new IllegalArgumentException("upstream cannot be null");
         }
@@ -24,15 +26,19 @@ public class AuthHandler implements HttpHandler {
     }
 
     public static AuthHandler fromExisting(AuthHandler handler, HttpHandler upstream) {
-        return new AuthHandler(handler, upstream);
+        return new AuthHandler(handler, upstream, handler.unauthorized);
     }
 
-    public static AuthHandler newAuthHandler(HttpHandler upstream) {
-        return new AuthHandler(null, upstream);
+    public static AuthHandler newAuthHandler(HttpHandler upstream, HttpHandler unauthorized) {
+        return new AuthHandler(null, upstream, unauthorized);
     }
 
     @Override
-    public void handle(HttpExchange httpExchange) throws IOException {
-
+    public void handle(HttpExchange exchange) throws IOException {
+        if (false) {
+            upstream.handle(exchange);
+        } else {
+            unauthorized.handle(exchange);
+        }
     }
 }

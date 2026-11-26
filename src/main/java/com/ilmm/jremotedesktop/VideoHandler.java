@@ -3,14 +3,19 @@ package com.ilmm.jremotedesktop;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
-import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 
 public class VideoHandler implements HttpHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        handleVideoStream(exchange);
+        try {
+            handleVideoStream(exchange);
+        } catch (IOException e) {
+            e.printStackTrace();
+            exchange.sendResponseHeaders(500, -1);
+            exchange.close();
+        }
     }
 
     private static void handleVideoStream(HttpExchange exchange) throws IOException {
