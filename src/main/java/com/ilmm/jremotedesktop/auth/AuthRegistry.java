@@ -13,4 +13,8 @@ public class AuthRegistry {
     public void register(AuthProvider provider) {
         providers.add(provider);
     }
+
+    public List<AuthProvider> getProviders() {
+        return providers;
+    }
 }

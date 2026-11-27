@@ -14,13 +14,19 @@ public class MpegCapture {
     private Rectangle bounds;
     private ImageFormat format;
     private Thread captureThread;
-    private List<FrameCaptureListener> listeners = new ArrayList<>();
-
-    private static final byte[] CRLF = "\r\n".getBytes();
+    private final List<FrameCaptureListener> listeners = new ArrayList<>();
     private boolean autoStartStop = false;
+
+    private static final byte[] BOUNDARY_AND_TYPE = "--frame\r\nContent-Type: image/".getBytes(StandardCharsets.US_ASCII);
+    private static final byte[] CONTENT_LENGTH_PREFIX = "\r\nContent-Length: ".getBytes(StandardCharsets.US_ASCII);
+    private static final byte[] HEADER_SUFFIX = "\r\n\r\n".getBytes(StandardCharsets.US_ASCII);
+    private static final byte[] CRLF = "\r\n".getBytes(StandardCharsets.US_ASCII);
+    private static final int LENGTH_DIGITS = 10;
+
 
     static class DirectByteArrayOutputStream extends ByteArrayOutputStream {
         public DirectByteArrayOutputStream(int size) { super(size); }
+        // get bytes without copying to new byte array like in the built-in ByteArrayOutputStream
         public byte[] getBuffer() { return buf; }
     }
 
@@ -32,28 +38,38 @@ public class MpegCapture {
 
     public void start() {
         captureThread = new Thread(() -> {
-            DirectByteArrayOutputStream baos = new DirectByteArrayOutputStream(2 * 1024 * 1024);
-
-            String headerTemplate = "--frame\r\nContent-Type: image/png\r\nContent-Length: %010d\r\n\r\n";
-            int headerLen = String.format(headerTemplate, 0).getBytes(StandardCharsets.US_ASCII).length;
+            // make sure image format cannot be changed while the capture loop is running
+            String subtype = format.getType();
+            byte[] typeBytes = subtype.getBytes(StandardCharsets.US_ASCII);
+            DirectByteArrayOutputStream baos = new DirectByteArrayOutputStream(512 * 1024);
 
             while (!Thread.currentThread().isInterrupted()) {
                 BufferedImage screenCapture = robot.createScreenCapture(bounds);
                 baos.reset();
 
                 try {
-                    baos.write(new byte[headerLen]);
+                    baos.write(BOUNDARY_AND_TYPE);
+                    baos.write(typeBytes);
+                    baos.write(CONTENT_LENGTH_PREFIX);
+                    int lengthOffset = baos.size();
+                    for (int i = 0; i < LENGTH_DIGITS; i++) {
+                        baos.write(' ');
+                    }
+                    baos.write(HEADER_SUFFIX);
 
+                    int imageStart = baos.size();
                     ImageIO.write(screenCapture, format.name(), baos);
-                    int imageSize = baos.size() - headerLen;
+                    int imageSize = baos.size() - imageStart;
+
+                    byte[] buf = baos.getBuffer();
+                    String lenStr = String.valueOf(imageSize);
+                    int pad = LENGTH_DIGITS - lenStr.length();
+                    for (int i = 0; i < lenStr.length(); i++) {
+                        buf[lengthOffset + pad + i] = (byte) lenStr.charAt(i);
+                    }
 
                     baos.write(CRLF);
-                    int totalLength = baos.size();
-
-                    byte[] headerBytes = String.format(headerTemplate, imageSize).getBytes(StandardCharsets.US_ASCII);
-                    System.arraycopy(headerBytes, 0, baos.getBuffer(), 0, headerLen);
-
-                    sendAll(baos.getBuffer(), 0, totalLength);
+                    sendAll(buf, baos.size());
                 } catch (IOException e) {
                     break;
                 }
@@ -86,9 +102,9 @@ public class MpegCapture {
         this.autoStartStop = autoStartStop;
     }
 
-    private void sendAll(byte[] framePacket, int i, int totalLength) {
+    private void sendAll(byte[] framePacket, int totalLength) {
         for (FrameCaptureListener listener : listeners) {
-            listener.framePacket(framePacket, i, totalLength);
+            listener.framePacket(framePacket, totalLength);
         }
     }
 }

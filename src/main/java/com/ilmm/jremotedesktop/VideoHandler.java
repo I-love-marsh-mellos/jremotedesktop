@@ -23,12 +23,16 @@ public class VideoHandler implements HttpHandler {
         exchange.sendResponseHeaders(200, 0);
 
         OutputStream outputStream = exchange.getResponseBody();
-        Main.capture.addListener((jpegFrame, i, totalLength) -> {
-            try {
-                outputStream.write(jpegFrame);
-            } catch (IOException e) {
-                e.printStackTrace();
-                exchange.close();
+        Main.capture.addListener(new FrameCaptureListener() {
+            @Override
+            public void framePacket(byte[] jpegFrame, int totalLength) {
+                try {
+                    outputStream.write(jpegFrame);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    exchange.close();
+                    Main.capture.removeListener(this);
+                }
             }
         });
     }
