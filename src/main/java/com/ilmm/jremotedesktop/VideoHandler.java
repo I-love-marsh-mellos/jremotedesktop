@@ -17,8 +17,7 @@ public class VideoHandler implements HttpHandlerWithHelpers {
             }
 
             if (!capabilities.hasViewDisplay()) {
-                exchange.sendResponseHeaders(403, -1);
-                exchange.close();
+                Utils.jsonResponse(401, exchange, "{\"message\":\"This user is not allowed to view display\"}");
                 return;
             }
 

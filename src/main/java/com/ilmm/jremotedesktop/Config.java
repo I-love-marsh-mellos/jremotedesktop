@@ -20,7 +20,7 @@ public class Config {
             # Standard username and password (leave blank to disable)
             login-username=
             login-password=
-            login-capabilities=
+            login-capabilities=5
             
             # No login required (best for view only)
             no-login-capabilities=0

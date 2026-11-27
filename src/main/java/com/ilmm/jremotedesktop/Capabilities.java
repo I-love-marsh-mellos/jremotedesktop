@@ -20,4 +20,8 @@ public record Capabilities(int setting) {
     public boolean hasAnything() {
         return hasViewDisplay() || hasKeyboardInput() || hasMouseInput();
     }
+
+    public int getMask() {
+        return setting;
+    }
 }

@@ -65,15 +65,29 @@ public class AuthHandler implements HttpHandler {
                 }
             }
 
+            int caps = 0;
+
             boolean isRecognized = false;
             for (AuthProvider provider : registry.getProviders()) {
                 Capabilities login = provider.isValidSession(new LoginHttpExchange(exchange, null));
-                if (login != null && login.hasAnything()) isRecognized = true;
+                if (login != null && login.hasAnything()) {
+                    isRecognized = true;
+                    if (login.hasViewDisplay()) caps = caps | Capabilities.VIEW_DISPLAY;
+                    if (login.hasKeyboardInput()) caps = caps | Capabilities.KEYBOARD_INPUT;
+                    if (login.hasMouseInput()) caps = caps | Capabilities.MOUSE_INPUT;
+                }
             }
+
+            Capabilities capabilities = new Capabilities(caps);
 
             // allow access to upstream if at least 1 AuthProvider recognized the client, some upstream handlers will include their own ACL checks
             if (isRecognized) {
-                upstream.handle(exchange);
+                if (upstream instanceof HttpHandlerWithHelpers) {
+                    HttpHandlerWithHelpers upstream1 = (HttpHandlerWithHelpers) upstream;
+                    upstream1.handle(exchange, capabilities);
+                } else {
+                    upstream.handle(exchange);
+                }
             } else {
                 unauthorized.handle(exchange);
             }

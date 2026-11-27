@@ -1,7 +1,10 @@
 package com.ilmm.jremotedesktop;
 
+import com.sun.net.httpserver.HttpExchange;
+
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -65,6 +68,13 @@ public class Utils {
             }
         }
         return cookies;
+    }
+
+    public static void jsonResponse(int rcode, HttpExchange exchange, String json) throws IOException {
+        byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().add("Content-Type", "application/json");
+        exchange.sendResponseHeaders(rcode, bytes.length);
+        exchange.getResponseBody().write(bytes);
     }
 
     public static boolean constantTimeEquals(String a, String b) {
