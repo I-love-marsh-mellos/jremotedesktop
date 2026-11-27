@@ -49,6 +49,7 @@ public class AuthHandler implements HttpHandler {
         URI uri = exchange.getRequestURI();
         String query = uri.getRawQuery();
         Map<String, String> params = Utils.parseQueryParams(query);
+        Map<String, String> cookies = Utils.parseCookieHeader(exchange.getRequestHeaders().getFirst("Cookie"));
 
         boolean isRecognized = false;
         for (AuthProvider provider : registry.getProviders()) {

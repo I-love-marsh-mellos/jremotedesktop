@@ -1,14 +1,20 @@
 package com.ilmm.jremotedesktop;
 
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Map;
 
-public class VideoHandler implements HttpHandler {
+public class VideoHandler implements HttpHandlerWithHelpers {
     @Override
-    public void handle(HttpExchange exchange) throws IOException {
+    public void handle(HttpExchange exchange, Capabilities capabilities) throws IOException {
+        if (!capabilities.hasViewDisplay()) {
+            exchange.sendResponseHeaders(403, -1);
+            exchange.close();
+            return;
+        }
+
         try {
             handleVideoStream(exchange);
         } catch (IOException e) {
@@ -29,7 +35,6 @@ public class VideoHandler implements HttpHandler {
                 try {
                     outputStream.write(jpegFrame);
                 } catch (IOException e) {
-                    e.printStackTrace();
                     exchange.close();
                     Main.capture.removeListener(this);
                 }

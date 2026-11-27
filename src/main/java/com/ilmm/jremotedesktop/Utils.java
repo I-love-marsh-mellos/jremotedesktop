@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -51,5 +52,21 @@ public class Utils {
         byte[] hash = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded();
 
         return MessageDigest.isEqual(hash, expectedHash);
+    }
+
+    public static Map<String, String> parseCookieHeader(String cookieHeader) {
+        Map<String, String> cookies = new HashMap<>();
+        if (cookieHeader == null || cookieHeader.isBlank()) {
+            return cookies;
+        }
+
+        String[] pairs = cookieHeader.split(";");
+        for (String pair : pairs) {
+            String[] keyValue = pair.trim().split("=", 2); // Limit to 2 in case value contains '='
+            if (keyValue.length == 2) {
+                cookies.put(keyValue[0].trim(), keyValue[1].trim());
+            }
+        }
+        return cookies;
     }
 }
