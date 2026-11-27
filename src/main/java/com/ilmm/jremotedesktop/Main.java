@@ -3,15 +3,26 @@ package com.ilmm.jremotedesktop;
 import com.sun.net.httpserver.HttpServer;
 
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 
 public class Main {
+    public static final String APPLICATION_NAME = "jremotedesktop";
     public static final int FRAME_RATE = 30;
     public static MpegCapture capture;
+    public static Config config;
 
     public static void main(String[] args) {
+        File file = new File(AppDataDir.getAppDataDirectory(APPLICATION_NAME), "config.txt");
+        System.out.println("Config file " + file.getAbsolutePath());
+        try {
+            config = new Config(file);
+        } catch (IOException e) {
+            System.err.println("Could not read config file");
+        }
+
         if (GraphicsEnvironment.isHeadless()) {
             diagnoseHeadlessEnvironment();
             return;

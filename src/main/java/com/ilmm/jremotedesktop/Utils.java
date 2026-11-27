@@ -6,10 +6,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Utils {
     public static Map<String, String> parseQueryParams(String query) {
@@ -68,5 +65,14 @@ public class Utils {
             }
         }
         return cookies;
+    }
+
+    public static boolean constantTimeEquals(String a, String b) {
+        if (a == null || b == null) {
+            return false;
+        }
+        byte[] aBytes = a.getBytes(StandardCharsets.UTF_8);
+        byte[] bBytes = b.getBytes(StandardCharsets.UTF_8);
+        return MessageDigest.isEqual(aBytes, bBytes);
     }
 }

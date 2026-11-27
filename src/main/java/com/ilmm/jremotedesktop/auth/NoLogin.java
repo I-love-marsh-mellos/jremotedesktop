@@ -2,15 +2,18 @@ package com.ilmm.jremotedesktop.auth;
 
 import com.ilmm.jremotedesktop.Capabilities;
 import com.ilmm.jremotedesktop.LoginHttpExchange;
+import com.ilmm.jremotedesktop.Main;
 
 public class NoLogin implements AuthProvider {
     @Override
     public Capabilities login(LoginHttpExchange exchange) {
-        return null; // TODO: config files for what different login providers can and can't do
+        int setting = Main.config.getAsInt("no-login-capabilities", 0);
+        return new Capabilities(setting);
     }
 
     @Override
     public Capabilities isValidSession(LoginHttpExchange exchange) {
-        return null;
+        int setting = Main.config.getAsInt("no-login-capabilities", 0);
+        return new Capabilities(setting);
     }
 }
