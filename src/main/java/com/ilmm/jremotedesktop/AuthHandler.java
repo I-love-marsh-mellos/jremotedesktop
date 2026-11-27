@@ -46,22 +46,31 @@ public class AuthHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        URI uri = exchange.getRequestURI();
-        String query = uri.getRawQuery();
-        Map<String, String> params = Utils.parseQueryParams(query);
-        Map<String, String> cookies = Utils.parseCookieHeader(exchange.getRequestHeaders().getFirst("Cookie"));
+        try {
+            URI uri = exchange.getRequestURI();
+            String query = uri.getRawQuery();
 
-        boolean isRecognized = false;
-        for (AuthProvider provider : registry.getProviders()) {
-            Capabilities login = provider.login(params);
-            if (login != null) isRecognized = true;
-        }
+            if (uri.getPath().equals("/api/login")) {
+                for (AuthProvider provider : registry.getProviders()) {
+                    Capabilities login = provider.isValidSession((LoginHttpExchange) exchange);
+//                if (login != null) isRecognized = true;
+                }
+            }
 
-        // allow access to upstream if at least 1 AuthProvider recognized the client, some upstream handlers will include their own ACL checks
-        if (isRecognized) {
-            upstream.handle(exchange);
-        } else {
-            unauthorized.handle(exchange);
+            boolean isRecognized = false;
+            for (AuthProvider provider : registry.getProviders()) {
+                Capabilities login = provider.isValidSession((LoginHttpExchange) exchange);
+                if (login != null) isRecognized = true;
+            }
+
+            // allow access to upstream if at least 1 AuthProvider recognized the client, some upstream handlers will include their own ACL checks
+            if (isRecognized) {
+                upstream.handle(exchange);
+            } else {
+                unauthorized.handle(exchange);
+            }
+        } catch (Throwable o) {
+            o.printStackTrace();
         }
     }
 }

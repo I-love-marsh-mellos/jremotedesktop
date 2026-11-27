@@ -9,16 +9,22 @@ import java.util.Map;
 public class VideoHandler implements HttpHandlerWithHelpers {
     @Override
     public void handle(HttpExchange exchange, Capabilities capabilities) throws IOException {
-        if (!capabilities.hasViewDisplay()) {
-            exchange.sendResponseHeaders(403, -1);
-            exchange.close();
-            return;
-        }
-
         try {
+            if (capabilities == null) {
+                exchange.sendResponseHeaders(401, -1);
+                exchange.close();
+                return;
+            }
+
+            if (!capabilities.hasViewDisplay()) {
+                exchange.sendResponseHeaders(403, -1);
+                exchange.close();
+                return;
+            }
+
             handleVideoStream(exchange);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Throwable o) {
+            o.printStackTrace();
             exchange.sendResponseHeaders(500, -1);
             exchange.close();
         }
