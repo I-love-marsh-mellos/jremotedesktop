@@ -32,9 +32,6 @@ public class UsernamePasswordLogin implements AuthProvider {
                     Main.config.getProperties().getProperty("login-username"))) {
 
                 if (Utils.verifyPassword(pass, Utils.hashPassword(Main.config.getProperties().getProperty("login-password")))) {
-
-                    System.out.println("correct login");
-
                     int setting = Main.config.getAsInt("login-capabilities",
                             Capabilities.KEYBOARD_INPUT | Capabilities.MOUSE_INPUT | Capabilities.VIEW_DISPLAY);
 

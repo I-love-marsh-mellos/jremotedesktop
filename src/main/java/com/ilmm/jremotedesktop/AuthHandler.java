@@ -5,16 +5,14 @@ import com.ilmm.jremotedesktop.auth.AuthRegistry;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
-import java.util.Map;
 
 public class AuthHandler implements HttpHandler {
     private final HttpHandler upstream;
     private final HashMap<String, String> sessions;
-    private HttpHandler unauthorized;
-    private AuthRegistry registry;
+    private final HttpHandler unauthorized;
+    private final AuthRegistry registry;
 
     private AuthHandler(AuthHandler handler, HttpHandler upstream, HttpHandler unauthorized, AuthRegistry registry) {
         this.unauthorized = unauthorized;
@@ -45,7 +43,7 @@ public class AuthHandler implements HttpHandler {
     }
 
     @Override
-    public void handle(HttpExchange exchange) throws IOException {
+    public void handle(HttpExchange exchange) {
         try {
             URI uri = exchange.getRequestURI();
             String query = uri.getRawQuery();
@@ -66,22 +64,19 @@ public class AuthHandler implements HttpHandler {
             }
 
             int caps = 0;
-
-            boolean isRecognized = false;
             for (AuthProvider provider : registry.getProviders()) {
                 Capabilities login = provider.isValidSession(new LoginHttpExchange(exchange, null));
                 if (login != null && login.hasAnything()) {
-                    isRecognized = true;
-                    if (login.hasViewDisplay()) caps = caps | Capabilities.VIEW_DISPLAY;
-                    if (login.hasKeyboardInput()) caps = caps | Capabilities.KEYBOARD_INPUT;
-                    if (login.hasMouseInput()) caps = caps | Capabilities.MOUSE_INPUT;
+                    if (login.hasViewDisplay()) caps |= Capabilities.VIEW_DISPLAY;
+                    if (login.hasKeyboardInput()) caps |= Capabilities.KEYBOARD_INPUT;
+                    if (login.hasMouseInput()) caps |= Capabilities.MOUSE_INPUT;
                 }
             }
 
             Capabilities capabilities = new Capabilities(caps);
 
             // allow access to upstream if at least 1 AuthProvider recognized the client, some upstream handlers will include their own ACL checks
-            if (isRecognized) {
+            if (capabilities.hasAnything()) {
                 if (upstream instanceof HttpHandlerWithHelpers) {
                     HttpHandlerWithHelpers upstream1 = (HttpHandlerWithHelpers) upstream;
                     upstream1.handle(exchange, capabilities);
