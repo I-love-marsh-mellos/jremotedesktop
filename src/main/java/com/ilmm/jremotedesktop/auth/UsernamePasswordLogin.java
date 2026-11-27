@@ -18,12 +18,14 @@ public class UsernamePasswordLogin implements AuthProvider {
     @Override
     public Capabilities login(LoginHttpExchange exchange) {
         try {
+            if (!"POST".equals(exchange.getRequestMethod())) return null;
             Map<String, String> params = Utils.parseQueryParams(new String(exchange.getRequestBody().readAllBytes()));
             String user = params.get("user");
             String pass = params.get("pass");
 
             if (Utils.constantTimeEquals(user, Main.config.getProperties().getProperty("login-username"))) {
-                if (Utils.verifyPassword(pass, Main.config.getProperties().getProperty("login-password"))) {
+                if (Utils.verifyPassword(pass, Utils.hashPassword(Main.config.getProperties().getProperty("login-password")))) {
+                    System.out.println("correct login");
                     int setting = Main.config.getAsInt("login-capabilities",
                             Capabilities.KEYBOARD_INPUT | Capabilities.MOUSE_INPUT | Capabilities.VIEW_DISPLAY);
 

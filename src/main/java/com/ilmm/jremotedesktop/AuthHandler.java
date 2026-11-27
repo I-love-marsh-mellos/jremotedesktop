@@ -51,16 +51,24 @@ public class AuthHandler implements HttpHandler {
             String query = uri.getRawQuery();
 
             if (uri.getPath().equals("/api/login")) {
-                for (AuthProvider provider : registry.getProviders()) {
-                    Capabilities login = provider.isValidSession((LoginHttpExchange) exchange);
+                if (exchange.getRequestMethod().equals("POST")) {
+                    byte[] requestBodyBytes = exchange.getRequestBody().readAllBytes();
+                    for (AuthProvider provider : registry.getProviders()) {
+                        Capabilities login = provider.login(new LoginHttpExchange(exchange, requestBodyBytes));
 //                if (login != null) isRecognized = true;
+                    }
+                } else {
+                    for (AuthProvider provider : registry.getProviders()) {
+                        Capabilities login = provider.login(new LoginHttpExchange(exchange, null));
+//                if (login != null) isRecognized = true;
+                    }
                 }
             }
 
             boolean isRecognized = false;
             for (AuthProvider provider : registry.getProviders()) {
-                Capabilities login = provider.isValidSession((LoginHttpExchange) exchange);
-                if (login != null) isRecognized = true;
+                Capabilities login = provider.isValidSession(new LoginHttpExchange(exchange, null));
+                if (login != null && login.hasAnything()) isRecognized = true;
             }
 
             // allow access to upstream if at least 1 AuthProvider recognized the client, some upstream handlers will include their own ACL checks

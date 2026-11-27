@@ -1,6 +1,7 @@
 package com.ilmm.jremotedesktop;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -22,12 +23,27 @@ public class Config {
             login-capabilities=
             
             # No login required (best for view only)
+            no-login-capabilities=0
             
+            # Image format
+            # png: high quality but is slower and uses more bandwidth and may not be supported on some clients
+            # jpg: may have artifacts but works everywhere
+            image-format=jpg
             """;
     private final File file;
 
     public Config(File file) throws IOException {
         this.file = file;
+
+        if (!file.exists()) {
+            try {
+                file.getParentFile().mkdirs();
+                Files.writeString(file.toPath(), defaultConfig);
+            } catch (IOException e) {
+                throw new IOException("Could not write config to " + file.getAbsolutePath());
+            }
+        }
+
         properties = new Properties();
         properties.load(Files.newBufferedReader(file.toPath()));
     }

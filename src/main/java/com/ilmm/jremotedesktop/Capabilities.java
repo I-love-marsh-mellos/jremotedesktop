@@ -16,4 +16,8 @@ public record Capabilities(int setting) {
     public boolean hasMouseInput() {
         return (setting & MOUSE_INPUT) != 0;
     }
+
+    public boolean hasAnything() {
+        return hasViewDisplay() || hasKeyboardInput() || hasMouseInput();
+    }
 }

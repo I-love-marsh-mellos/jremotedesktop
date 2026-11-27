@@ -1,9 +1,13 @@
 package com.ilmm.jremotedesktop;
 
+import com.ilmm.jremotedesktop.auth.AuthRegistry;
+import com.ilmm.jremotedesktop.auth.NoLogin;
+import com.ilmm.jremotedesktop.auth.UsernamePasswordLogin;
 import com.sun.net.httpserver.HttpServer;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
@@ -20,7 +24,7 @@ public class Main {
         try {
             config = new Config(file);
         } catch (IOException e) {
-            System.err.println("Could not read config file");
+            e.printStackTrace();
         }
 
         if (GraphicsEnvironment.isHeadless()) {
@@ -32,8 +36,8 @@ public class Main {
             Robot robot = new Robot();
 
             if (isWaylandSession()) {
-                System.err.println("Warning: Wayland session detected. Screen capture and input simulation " +
-                        "may be blocked or restricted by your desktop compositor.");
+                System.err.println("Warning: Wayland session detected. Screen capture and input " +
+                        "may be blocked by your desktop compositor.");
             }
 
             capture = new MpegCapture(robot, new Rectangle(Toolkit.getDefaultToolkit().getScreenSize()), ImageFormat.JPG);
@@ -52,7 +56,23 @@ public class Main {
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress(9000), 0);
             server.start();
-            server.createContext("/", new VideoHandler());
+
+            AuthRegistry registry = new AuthRegistry();
+            registry.register(new UsernamePasswordLogin());
+            registry.register(new NoLogin());
+
+            AuthHandler auth = AuthHandler.newAuthHandler(registry, new VideoHandler(), new UnauthorizedHandler());
+            server.createContext("/api/video", auth);
+            server.createContext("/", AuthHandler.fromExisting(auth, exchange -> {
+                File file1 = new File("src/main/java/com/ilmm/jremotedesktop/web/index.html");
+                if (file1.exists()) {
+                    exchange.sendResponseHeaders(200, file1.length());
+                    try (FileInputStream fis = new FileInputStream(file1)) {
+                        fis.transferTo(exchange.getResponseBody());
+                    }
+                    exchange.close();
+                }
+            }));
         } catch (BindException e) {
             System.out.println("Server port is already in use");
             System.out.println(e.getMessage());

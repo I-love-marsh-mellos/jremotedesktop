@@ -12,4 +12,9 @@ public enum ImageFormat {
     public String getType() {
         return type;
     }
+
+    public static ImageFormat fromString(String s) {
+        if (s != null && s.equalsIgnoreCase("png")) return PNG;
+        return JPG;
+    }
 }

@@ -9,9 +9,36 @@
 </head>
 <body>
 <div class="center">
-    <input type="username" placeholder="Username">
-    <input type="password" placeholder="Password">
-    <button>Login</button>
+    <input type="username" placeholder="Username" id="user">
+    <input type="password" placeholder="Password" id="pass">
+    <button id="login">Login</button>
+
+    <script>
+        (() => {
+            const username = document.getElementById("user");
+            const password = document.getElementById("pass");
+            const login = document.getElementById("login");
+
+            login.addEventListener("click", async () => {
+                try {
+                    const params = new URLSearchParams();
+                    params.append("user", username.value);
+                    params.append("pass", password.value);
+                    const res = await fetch("/api/login", {
+                        method: "POST",
+                        body: params.toString()
+                    });
+                    if (res.ok) {
+                        console.log("logged in");
+                    } else {
+                        console.log("wrong user or password");
+                    }
+                } catch (e) {
+                    console.log("network error");
+                }
+            });
+        })();
+    </script>
 </div>
 </body>
 </html>

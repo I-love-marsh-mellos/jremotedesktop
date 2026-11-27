@@ -5,6 +5,8 @@ import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpPrincipal;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -12,9 +14,11 @@ import java.net.URI;
 
 public class LoginHttpExchange extends HttpExchange {
     private final HttpExchange exchange;
+    private final byte[] bytes;
 
-    public LoginHttpExchange(HttpExchange exchange) {
+    public LoginHttpExchange(HttpExchange exchange, byte[] requestBodyBytes) throws IOException {
         this.exchange = exchange;
+        bytes = requestBodyBytes;
     }
 
     @Override
@@ -49,6 +53,7 @@ public class LoginHttpExchange extends HttpExchange {
 
     @Override
     public InputStream getRequestBody() {
+        if (bytes != null) return new ByteArrayInputStream(bytes);
         return null;
     }
 

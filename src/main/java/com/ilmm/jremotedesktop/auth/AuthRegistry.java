@@ -6,9 +6,7 @@ import java.util.List;
 public class AuthRegistry {
     private List<AuthProvider> providers = new ArrayList<>();
 
-    public AuthRegistry() {
-
-    }
+    public AuthRegistry() {}
 
     public void register(AuthProvider provider) {
         providers.add(provider);
