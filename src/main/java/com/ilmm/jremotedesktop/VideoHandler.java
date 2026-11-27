@@ -25,7 +25,7 @@ public class VideoHandler implements HttpHandler {
         OutputStream outputStream = exchange.getResponseBody();
         Main.capture.addListener(new FrameCaptureListener() {
             @Override
-            public void framePacket(byte[] jpegFrame, int totalLength) {
+            public void framePacket(byte[] jpegFrame) {
                 try {
                     outputStream.write(jpegFrame);
                 } catch (IOException e) {

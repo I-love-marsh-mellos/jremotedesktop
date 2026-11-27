@@ -8,13 +8,14 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MpegCapture {
     private final Robot robot;
     private Rectangle bounds;
     private ImageFormat format;
     private Thread captureThread;
-    private final List<FrameCaptureListener> listeners = new ArrayList<>();
+    private final List<FrameCaptureListener> listeners = new CopyOnWriteArrayList<>();
     private boolean autoStartStop = false;
 
     private static final byte[] BOUNDARY_AND_TYPE = "--frame\r\nContent-Type: image/".getBytes(StandardCharsets.US_ASCII);
@@ -69,7 +70,7 @@ public class MpegCapture {
                     }
 
                     baos.write(CRLF);
-                    sendAll(buf, baos.size());
+                    sendAll(buf);
                 } catch (IOException e) {
                     break;
                 }
@@ -102,9 +103,9 @@ public class MpegCapture {
         this.autoStartStop = autoStartStop;
     }
 
-    private void sendAll(byte[] framePacket, int totalLength) {
+    private void sendAll(byte[] framePacket) {
         for (FrameCaptureListener listener : listeners) {
-            listener.framePacket(framePacket, totalLength);
+            listener.framePacket(framePacket);
         }
     }
 }
