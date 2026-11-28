@@ -44,6 +44,34 @@ public class WebSocketServer {
             this.out = socket.getOutputStream();
         }
 
+        private String readMessage() throws IOException {
+            int b = in.read();
+            if (b == -1) return null;
+            b = in.read();
+            if (b == -1) return null;
+            int payloadLength = b & 0x7F;
+            if (payloadLength == 126) {
+                payloadLength = (in.read() << 8) | in.read();
+            } else if (payloadLength == 127) {
+                payloadLength = 0;
+            }
+
+            byte[] mask = new byte[4];
+            in.read(mask, 0, 4);
+            byte[] payload = new byte[payloadLength];
+            int read = 0;
+            while (read < payloadLength) {
+                int r = in.read(payload, read, payloadLength - read);
+                if (r == -1) break;
+                read += r;
+            }
+            for (int i = 0; i < payloadLength; i++) {
+                payload[i] = (byte) (payload[i] ^ mask[i % 4]);
+            }
+
+            return new String(payload, StandardCharsets.UTF_8);
+        }
+
         @Override
         public void run() {
             try {
@@ -69,7 +97,7 @@ public class WebSocketServer {
                 out.flush();
 
                 while (!socket.isClosed()) {
-
+                    System.out.println("WS recv " + readMessage());
                 }
             } catch (Exception ignored) {
             } finally {
